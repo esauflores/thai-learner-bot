@@ -6,10 +6,15 @@ from telegram.ext import (
 )
 from commands.test import start, default_reply, user_info, help, menu
 from helpers.env import get_env_variable
+from helpers.cards_storage import CardsStorage
+
+cards_storage = CardsStorage()
 
 
 def main():
     bot_token = get_env_variable("BOT_TOKEN")
+
+    print("Bot is running...")
 
     app = Application.builder().token(bot_token).build()
     app.add_handler(CommandHandler(command="start", callback=start))
