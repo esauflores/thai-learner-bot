@@ -4,11 +4,13 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from commands.test import start, default_reply, user_info, help, menu
-from helpers.env import get_env_variable
-from helpers.cards_storage import CardsStorage
 
-cards_storage = CardsStorage()
+from helpers.env import get_env_variable
+
+from commands.add_card import add_card
+from commands.update_card import update_card
+from commands.get_card import get_card
+from commands.default_reply import default_reply
 
 
 def main():
@@ -17,12 +19,22 @@ def main():
     print("Bot is running...")
 
     app = Application.builder().token(bot_token).build()
-    app.add_handler(CommandHandler(command="start", callback=start))
+
     app.add_handler(
-        MessageHandler(filters=filters.FORWARDED & ~filters.COMMAND, callback=user_info)
+        CommandHandler(command="add_card", callback=add_card, has_args=True),
     )
-    app.add_handler(CommandHandler(command="help", callback=help))
-    app.add_handler(CommandHandler(command="menu", callback=menu))
+
+    app.add_handler(
+        CommandHandler(command="update_card", callback=update_card, has_args=True),
+    )
+
+    app.add_handler(
+        CommandHandler(command="get_card", callback=get_card, has_args=True),
+    )
+
+    # app.add_handler(CommandHandler(command="update_card", callback=update_card))
+
+    # app.add_handler(CommandHandler(command="get_card", callback=get_card))
 
     app.add_handler(MessageHandler(filters=filters.TEXT, callback=default_reply))
 
