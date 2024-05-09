@@ -5,11 +5,11 @@ from telegram.ext import (
     filters,
 )
 from commands.test import start, default_reply, user_info, help, menu
-from helpers.env import env_variable
+from helpers.env import get_env_variable
 
 
 def main():
-    bot_token = env_variable("BOT_TOKEN", root_path=".")
+    bot_token = get_env_variable("BOT_TOKEN")
 
     app = Application.builder().token(bot_token).build()
     app.add_handler(CommandHandler(command="start", callback=start))
