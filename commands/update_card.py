@@ -1,5 +1,6 @@
-from helpers.cards_storage import CardsStorage
 from telegram import Update, ReplyKeyboardRemove
+from helpers.global_storage import get_storage
+from helpers.cards_storage import Card
 
 
 # This command allows users to update an existing flashcard in the Flashcards project.
@@ -18,7 +19,7 @@ from telegram import Update, ReplyKeyboardRemove
 # /update_card Hello สวัสดี Greeting Vocabulary
 
 
-async def update_card(update: Update, context, card_storage: CardsStorage):
+async def update_card(update: Update, context):
     # Parse the command arguments
     args = context.args
     if len(args) < 2:
@@ -27,12 +28,12 @@ async def update_card(update: Update, context, card_storage: CardsStorage):
         )
         return
 
-    english_phrase = args[0]
-    new_thai_translation = args[1]
-    tags = args[2:] if len(args) > 2 else []
+    # get the storage
+
+    storage = get_storage()
 
     # Check if the card exists
-    card = card_storage.get_card_by_english_phrase(english_phrase)
+    card = storage.get_card_by_english_phrase(args[0])
 
     if card is None:
         await update.message.reply_text(
@@ -41,8 +42,8 @@ async def update_card(update: Update, context, card_storage: CardsStorage):
         return
 
     # Update the card with the new Thai translation and tags
-    card.thai_translation = new_thai_translation
-    card.tags = tags
+    card.thai_translation = args[1]
+    card.tags = args[2:] if len(args) > 2 else []
 
     await update.message.reply_text(
         "Flashcard updated successfully.", reply_markup=ReplyKeyboardRemove()
