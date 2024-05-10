@@ -7,17 +7,28 @@ from telegram.ext import (
 
 from helpers.env import get_env_variable
 
-from commands.cards import add_card, update_card, get_card
-from commands.quizz.start_quizz import start_quizz
+from commands.cards.add_card import add_card
+from commands.cards.update_card import update_card
+from commands.cards.get_card import get_card
+from commands.quizz import start_quizz
+
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def main():
     bot_token = get_env_variable("BOT_TOKEN")
 
     print("Bot is running...")
-
     app = Application.builder().token(bot_token).build()
 
+    app.add_handler(
+            start_quizz.main()
+        )
+    
     app.add_handler(
         CommandHandler(command="add_card", callback=add_card, has_args=True),
     )
@@ -30,9 +41,7 @@ def main():
         CommandHandler(command="get_card", callback=get_card, has_args=True),
     )
 
-    app.add_handler(
-        CommandHandler(command="start_quizz", callback=start_quizz, has_args=False),
-    )
+   
 
     app.run_polling()
 
