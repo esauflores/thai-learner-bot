@@ -13,51 +13,55 @@ from helpers.global_storage import get_storage
 # Define states
 ASK_QUESTION, CHECK_ANSWER, CONTINUE = range(3)
 
-queue = []
-storage = get_storage()
-queue = storage.cards[:]
-random.shuffle(queue)
+
 
 async def start_quizz(update: Update, context: CallbackContext):
-    print("hi")
-    return ASK_QUESTION
+    global queue
+    storage = get_storage()
+    queue = storage.cards[:]
+    random.shuffle(queue)
+    await update.message.reply_text("Start quizz.")
+    return await ask(update, context, queue)  # Await the result of ask()
 
-async def ask(update: Update, context: CallbackContext):
-    print(queue)
-    if queue:  # If there are still questions in the queue
-        card = queue[0] # Get the first question from the queue
-        await update.message.reply_text(
-            f"English phrase: {card.english_phrase}\nPlease provide the Thai translation."
-        )
-        return CHECK_ANSWER  # Transition to checking the answer
-    else:
-        await update.message.reply_text("Quiz completed!")  # Notify the user if all questions have been asked
-        return ConversationHandler.END  # End the conversation
+
+async def ask(update: Update, context: CallbackContext ,queue):
+
+    card = queue[0] # Get the first question from the queue
+    await update.message.reply_text(
+        f"English phrase: {card.english_phrase}\nPlease provide the Thai translation."
+    )
+    return CHECK_ANSWER  # Transition to checking the answer
+    
 
 
 async def check_answer(update: Update, context: CallbackContext):
     user_response = update.message.text.strip().lower()
     card = queue[0]
     if user_response == card.thai_translation.lower():
-        await update.message.reply_text("Correct!")
+        queue.pop(0)
+        if len(queue) >0 :
+            await update.message.reply_text("Correct! \n Do you want to continue quizz? (yes/no)")
+            
+        else:
+            await update.message.reply_text("Correct! \n Quiz completed!")
+            return ConversationHandler.END
     else:
         queue.append(queue.pop(0))  # Put the current question back in the queue
-        await update.message.reply_text("Wrong answer. Try again.")
+        await update.message.reply_text("Wrong answer. \n Do you want to continue quizz? (yes/no)")
+    return CONTINUE
 
-    return CONTINUE  # Continue to ask the next question
 
 async def continue_quiz(update: Update, context: CallbackContext):
     user_response = update.message.text.lower()
 
     if user_response == "yes":
-        return ASK_QUESTION  # If the user wants to continue, ask the next question
+        return await ask(update, context, queue)  # Await the result of ask()
     elif user_response == "no":
-        update.message.reply_text("Quiz stopped.")
+        await update.message.reply_text("Quiz stopped.")
         return ConversationHandler.END
     else:
-        update.message.reply_text("Please answer with 'yes' or 'no'.")
+        await update.message.reply_text("Please answer with 'yes' or 'no'.")
         return CONTINUE
-
 
 
 async def cancel(update: Update, context: CallbackContext):
@@ -70,7 +74,6 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start_quizz', start_quizz)],
         states={
-            ASK_QUESTION: [MessageHandler(filters.TEXT, ask)],
             CHECK_ANSWER: [MessageHandler(filters.TEXT, check_answer)],
             CONTINUE: [MessageHandler(filters.TEXT, continue_quiz)],
         },
