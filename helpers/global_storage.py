@@ -1,4 +1,4 @@
-from helpers.cards_storage import Card, CardsStorage as cards_storage
+from helpers.cards_storage import Card, CardsStorage
 
 storage = None
 
@@ -19,7 +19,7 @@ def get_storage():
     global storage
 
     if not storage:
-        storage = cards_storage.CardsStorage()
+        storage = CardsStorage()
         initialize_storage()
 
     return storage
