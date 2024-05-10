@@ -1,7 +1,3 @@
-from telegram import Update, ReplyKeyboardRemove
-from helpers.global_storage import get_storage
-from helpers.cards_storage import Card
-
 # This command allows users to add new flashcards to the Flashcards project, helping them learn English to Thai translations.
 
 # Syntax:
@@ -16,6 +12,10 @@ from helpers.cards_storage import Card
 # Example:
 
 # /add_card Hello สวัสดี Greeting
+
+from telegram import Update, ReplyKeyboardRemove
+from helpers.global_storage import get_storage
+from helpers.cards_storage import Card
 
 
 async def add_card(update: Update, context):
