@@ -1,65 +1,80 @@
-# This command allows users to start a quiz session using flashcards from the Flashcards project.
-
-# Syntax:
-
-# /start_quizz [tags]
-# Parameters:
-
-# [tags] (optional): Tags used to filter flashcards for the quiz. If provided, only flashcards with matching tags will be included in the quiz. If not provided, flashcards from all tags will be included.
-# Example:
-
-# /start_quizz Greeting Vocabulary
-# /start_quizz
-
 import random
 from telegram import Update
 from telegram.ext import (
     CommandHandler,
     MessageHandler,
+    ConversationHandler,
     filters,
     CallbackContext,
 )
 
 from helpers.global_storage import get_storage
 
-queue = []
+# Define states
+ASK_QUESTION, CHECK_ANSWER, CONTINUE = range(3)
 
+queue = []
+storage = get_storage()
+queue = storage.cards[:]
+random.shuffle(queue)
 
 async def start_quizz(update: Update, context: CallbackContext):
-    global queue
+    print("hi")
+    return ASK_QUESTION
 
-    storage = get_storage()
-    queue = storage.cards[:]
-    random.shuffle(queue)
-
-    # Start presenting questions
-    for card in queue:
+async def ask(update: Update, context: CallbackContext):
+    print(queue)
+    if queue:  # If there are still questions in the queue
+        card = queue[0] # Get the first question from the queue
         await update.message.reply_text(
             f"English phrase: {card.english_phrase}\nPlease provide the Thai translation."
         )
-        user_response = None
-        while user_response is None:
-            updates = await context.bot.get_updates(update.update_id + 1)
-            print(updates)
-            # Check for new messages in the update object
-            for u in updates:
-                if u.message and u.message.text and not u.message.text.startswith("/"):
-                    user_response = u.message.text
+        return CHECK_ANSWER  # Transition to checking the answer
+    else:
+        await update.message.reply_text("Quiz completed!")  # Notify the user if all questions have been asked
+        return ConversationHandler.END  # End the conversation
 
-        if card.thai_translation == user_response:
 
-            queue.pop(0)  # Remove the current question from the queue
+async def check_answer(update: Update, context: CallbackContext):
+    user_response = update.message.text.strip().lower()
+    card = queue[0]
+    if user_response == card.thai_translation.lower():
+        await update.message.reply_text("Correct!")
+    else:
+        queue.append(queue.pop(0))  # Put the current question back in the queue
+        await update.message.reply_text("Wrong answer. Try again.")
 
-            await update.message.reply_text(
-                "Correct! Let's get the next English phrase."
-            )
+    return CONTINUE  # Continue to ask the next question
 
-        else:
-            # Move the current question to the end of the queue
-            queue.append(queue.pop(0))
-            await update.message.reply_text(
-                "Wrong answer. Let's get the next English phrase."
-            )
+async def continue_quiz(update: Update, context: CallbackContext):
+    user_response = update.message.text.lower()
 
-    await update.message.reply_text("Quiz completed!")
-    return
+    if user_response == "yes":
+        return ASK_QUESTION  # If the user wants to continue, ask the next question
+    elif user_response == "no":
+        update.message.reply_text("Quiz stopped.")
+        return ConversationHandler.END
+    else:
+        update.message.reply_text("Please answer with 'yes' or 'no'.")
+        return CONTINUE
+
+
+
+async def cancel(update: Update, context: CallbackContext):
+    await update.message.reply_text("Quiz cancelled.")
+    return ConversationHandler.END
+
+
+def main():
+    # Create the ConversationHandler for the quiz
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start_quizz', start_quizz)],
+        states={
+            ASK_QUESTION: [MessageHandler(filters.TEXT, ask)],
+            CHECK_ANSWER: [MessageHandler(filters.TEXT, check_answer)],
+            CONTINUE: [MessageHandler(filters.TEXT, continue_quiz)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
+    return conv_handler
