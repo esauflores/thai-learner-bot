@@ -1,7 +1,4 @@
-# Libraries
-
-pip install python-telegram-bot
-
-pip install dotenv
-
-pip install ruff
+python-telegram-bot
+python-dotenv
+ruff
+pre-commit
