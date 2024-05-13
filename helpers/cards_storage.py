@@ -46,9 +46,6 @@ class Card:
     def get_thai_translation(self):
         return self.thai_translation
 
-    def has_tag(self, tag):
-        return tag in self.tags
-
 
 class CardsStorage:
     def __init__(self):

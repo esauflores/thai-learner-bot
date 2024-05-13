@@ -13,7 +13,6 @@
 
 from telegram import Update, ReplyKeyboardMarkup
 from helpers.global_storage import get_storage
-from helpers.cards_storage import Card
 
 
 async def get_card(update: Update, context):

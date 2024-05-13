@@ -1,8 +1,6 @@
 from telegram.ext import (
     Application,
     CommandHandler,
-    MessageHandler,
-    filters,
 )
 
 from helpers.env import get_env_variable
